@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: vigia-integridad-urubamba
+    runtime: python
+    buildCommand: "echo listo"
+    startCommand: "python servidor.py"
+    envVars:
+      - key: RENDER
+        value: "true"
+    plan: free

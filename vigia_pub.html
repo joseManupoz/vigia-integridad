@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0C2340">
+<title>Vigía Ciudadano — Urubamba</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f0f2f8;color:#1a1a2e;font-size:14px}
+.top{background:#0C2340;padding:20px;text-align:center}
+.top h1{color:#fff;font-size:18px;font-weight:700;margin-bottom:4px}
+.top p{color:#9FBEDC;font-size:12px;line-height:1.5}
+.wrap{max-width:700px;margin:0 auto;padding:16px}
+.banner{background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#27500A;text-align:center;line-height:1.6}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.stat{background:#fff;border-radius:8px;padding:13px;border:1px solid #dde2ef;text-align:center}
+.sl{font-size:11px;color:#888;margin-bottom:3px}
+.sv{font-size:22px;font-weight:700}
+.caso{background:#fff;border:1px solid #dde2ef;border-radius:10px;padding:14px;margin-bottom:10px}
+.cid{font-family:monospace;font-size:10px;color:#bbb}
+.cobra{font-size:14px;font-weight:700;margin:4px 0;line-height:1.4}
+.cmeta{font-size:12px;color:#888}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700}
+.rojo{background:#fde8e8;color:#7a0000}
+.ambar{background:#fff3d9;color:#7a4200}
+.azul{background:#deeeff;color:#0a3d7a}
+.verde{background:#e2f5d9;color:#1a5200}
+.sem{display:flex;align-items:center;gap:8px;padding:9px;border-radius:7px;margin:8px 0}
+.sem.crit{background:#fde8e8;border:1px solid #f09595}
+.sem.alto{background:#fff3d9;border:1px solid #FAC775}
+.sem.med{background:#deeeff;border:1px solid #B5D4F4}
+.dot{width:14px;height:14px;border-radius:50%;flex-shrink:0}
+.plazo-ok{background:#e2f5d9;border:1px solid #C0DD97;border-radius:6px;padding:8px 12px;font-size:12px;color:#1a5200;margin-top:6px}
+.plazo-warn{background:#fff0f0;border:1px solid #f09595;border-radius:6px;padding:8px 12px;font-size:12px;color:#7a0000;margin-top:6px}
+.hallbox{background:#fffbe6;border-left:3px solid #e8a000;padding:8px 12px;border-radius:0 6px 6px 0;font-size:12px;color:#555;margin-top:8px;line-height:1.5}
+.footer{background:#0C2340;padding:14px;text-align:center;color:#9FBEDC;font-size:11px;line-height:1.8;margin-top:20px}
+.empty{text-align:center;padding:28px;color:#bbb}
+@media(max-width:500px){.stats{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="top">
+  <div style="font-size:32px;margin-bottom:8px">🛡</div>
+  <h1>VIGÍA DE INTEGRIDAD</h1>
+  <p>Panel de Transparencia Ciudadana<br>Sub-Prefectura Provincial de Urubamba · Cusco, Perú</p>
+</div>
+<div class="wrap">
+  <div class="banner">
+    Panel de <strong>solo lectura</strong> para la ciudadanía de Urubamba.<br>
+    Muestra las obras y contratos públicos bajo vigilancia activa.<br>
+    <strong>José Manuel Pozo Carlos</strong> · Sub-prefecto · <em>Actualización automática</em>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="sl">Obras vigiladas</div><div class="sv" id="p-tot" style="color:#0C2340">—</div></div>
+    <div class="stat"><div class="sl">Alertas activas</div><div class="sv" id="p-alrt" style="color:#E24B4A">—</div></div>
+    <div class="stat"><div class="sl">Monto custodiado</div><div class="sv" id="p-monto" style="font-size:16px;color:#27500A">—</div></div>
+  </div>
+  <div id="lista"><div class="empty">Cargando información...</div></div>
+</div>
+<div class="footer">
+  Sistema Vigía de Integridad v4.1<br>
+  Propietario: José Manuel Pozo Carlos · Sub-prefecto de Urubamba<br>
+  Licencia: VIGIA-URB-2026-JMPC · Cusco, Perú<br>
+  <small>La transparencia es el derecho de cada vecino de nuestra provincia.</small>
+</div>
+<script>
+const HOY=new Date(),P=7;
+function ff(d){if(!d)return'—';return new Date(d+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'});}
+function dr(fe){if(!fe)return null;const v=new Date(fe+'T12:00:00');v.setDate(v.getDate()+P);return Math.ceil((v-HOY)/864e5);}
+async function cargar(){
+  try{
+    const casos=await fetch('/api/casos/publicos').then(r=>r.json());
+    let alrt=0,monto=0;
+    casos.forEach(c=>{
+      const d=dr(c.fecha_envio);
+      if(c.estado!=='resuelto'&&d!==null&&d<=3)alrt++;
+      if(c.monto)monto+=parseFloat(c.monto.replace(/[^0-9.]/g,'')||0);
+    });
+    document.getElementById('p-tot').textContent=casos.length;
+    document.getElementById('p-alrt').textContent=alrt;
+    const m=monto;
+    document.getElementById('p-monto').textContent=m>=1e6?'S/ '+(m/1e6).toFixed(1)+'M':m>=1000?'S/ '+Math.round(m/1000)+'K':'S/ '+Math.round(m);
+    const lista=document.getElementById('lista');
+    if(!casos.length){lista.innerHTML='<div class="empty">Sin casos registrados.</div>';return;}
+    lista.innerHTML=casos.map(c=>{
+      const d=dr(c.fecha_envio);
+      const r=c.riesgo||'medio';
+      const sc={critico:'crit',alto:'alto',medio:'med'}[r]||'med';
+      const dc={critico:'#E24B4A',alto:'#e8a000',medio:'#185FA5'}[r]||'#185FA5';
+      const rl={critico:'RIESGO CRÍTICO',alto:'RIESGO ALTO',medio:'RIESGO MEDIO'}[r]||'EN REVISIÓN';
+      const ev=c.estado!=='resuelto'&&c.estado!=='escalado'&&d!==null&&d<=0;
+      const est=c.estado==='resuelto'?'<span class="badge verde">Resuelto</span>':
+        c.estado==='escalado'?'<span class="badge ambar">Escalado a Contraloría</span>':
+        ev?'<span class="badge rojo">PLAZO VENCIDO</span>':
+        d!==null&&d<=3?`<span class="badge ambar">Vence en ${d}d</span>`:
+        '<span class="badge azul">En seguimiento</span>';
+      const plazo=c.estado==='resuelto'?
+        '<div class="plazo-ok">✓ Caso cerrado y archivado.</div>':
+        ev?'<div class="plazo-warn">⚠ El plazo legal venció sin respuesta. Se solicitó escalada a la Contraloría.</div>':
+        d!==null&&d<=3?`<div class="plazo-warn">⚠ Vence en ${d} día(s). La Sub-Prefectura está en seguimiento activo.</div>`:
+        `<div class="plazo-ok">✓ Dentro del plazo legal. La entidad debe responder antes del ${ff(new Date(new Date(c.fecha_envio+'T12:00:00').getTime()+(P*864e5)))}.</div>`;
+      return `<div class="caso">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px">
+          <div><div class="cid">${c.id} · ${c.seace||'—'} · ${c.institucion||'—'}</div>
+          <div class="cobra">${c.obra}</div>
+          <div class="cmeta">Registrado: ${ff(c.creado_en)} &nbsp;·&nbsp; ${est}</div></div>
+          <div style="font-size:14px;font-weight:700;color:#27500A;font-family:monospace;white-space:nowrap">S/ ${c.monto||'—'}</div>
+        </div>
+        <div class="sem ${sc}">
+          <div class="dot" style="background:${dc}"></div>
+          <div><div style="font-size:13px;font-weight:700;color:${dc}">${rl}</div>
+          <div style="font-size:11px;color:#888;margin-top:1px">Nivel de irregularidad detectada por auditoría</div></div>
+        </div>
+        ${plazo}
+      </div>`;
+    }).join('');
+  }catch(e){document.getElementById('lista').innerHTML='<div class="empty">Error al cargar. Intenta nuevamente.</div>';}
+}
+cargar();
+setInterval(cargar,60000);
+</script>
+</body>
+</html>

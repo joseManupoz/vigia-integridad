@@ -1,0 +1,48 @@
+{
+  "name": "Vigía de Integridad",
+  "short_name": "Vigía",
+  "description": "Sistema de Auditoría con IA — Sub-Prefectura de Urubamba, Cusco, Perú",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#040D1A",
+  "theme_color": "#040D1A",
+  "categories": [
+    "government",
+    "productivity",
+    "utilities"
+  ],
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Panel de Control",
+      "url": "/",
+      "description": "Ver alertas activas"
+    },
+    {
+      "name": "Registrar Caso",
+      "url": "/?page=nuevo",
+      "description": "Registrar nueva irregularidad"
+    },
+    {
+      "name": "Panel Ciudadano",
+      "url": "/publico",
+      "description": "Ver transparencia pública"
+    }
+  ]
+}

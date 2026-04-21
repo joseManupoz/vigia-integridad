@@ -1,0 +1,2 @@
+# Vigia de Integridad v4.0
+# Sin dependencias externas — solo Python estandar
