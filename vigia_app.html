@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="theme-color" content="#040D1A">
+<meta name="application-name" content="Vigía">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vigía">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="msapplication-TileColor" content="#040D1A">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.svg">
+<link rel="icon" type="image/svg+xml" href="/icon-192.svg">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Vigía de Integridad v4.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#040D1A;--navy2:#071628;--navy3:#0A1F38;--navy4:#0D2B4E;
+  --blue:#1565C0;--blue-l:#1E88E5;--cyan:#00B8D4;--cyan-l:#18FFFF;
+  --red:#C62828;--red-l:#EF5350;--red-v:#FF1744;
+  --gold:#F9A825;--gold-l:#FFD54F;
+  --green:#2E7D32;--green-l:#66BB6A;
+  --white:#F0F4FF;--muted:#8EABC8;
+  --border:rgba(0,184,212,.15);--border2:rgba(0,184,212,.30);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Source Sans 3',sans-serif;background:var(--navy);color:var(--white);font-size:14px;padding-bottom:72px;min-height:100vh}
+body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);pointer-events:none;z-index:0}
+
+.topbar{position:sticky;top:0;z-index:200;background:linear-gradient(135deg,#020810,#071628);border-bottom:1px solid var(--border2);padding:0 16px;display:flex;align-items:stretch;justify-content:space-between;box-shadow:0 2px 24px rgba(0,0,0,.5),0 0 20px rgba(0,184,212,.25);min-height:54px}
+.topbar-brand{display:flex;align-items:center;gap:10px;padding:10px 0}
+.brand-shield{width:36px;height:36px;flex-shrink:0;background:linear-gradient(135deg,var(--red),#8B0000);border-radius:6px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(198,40,40,.35);animation:shieldPulse 4s ease-in-out infinite}
+@keyframes shieldPulse{0%,100%{box-shadow:0 0 20px rgba(198,40,40,.35)}50%{box-shadow:0 0 28px rgba(239,83,80,.5)}}
+.brand-shield svg{width:20px;height:20px}
+.brand-name{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;letter-spacing:2px;color:#fff;text-transform:uppercase;line-height:1.1}
+.brand-sub{font-size:10px;color:var(--cyan);letter-spacing:1.5px;font-family:'JetBrains Mono',monospace;text-transform:uppercase}
+.topbar-status{display:flex;align-items:center;gap:10px;padding:10px 0}
+.status-pill{display:flex;align-items:center;gap:6px;background:rgba(0,184,212,.08);border:1px solid var(--border2);border-radius:20px;padding:4px 12px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
+.live-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.live-dot.on{background:#66BB6A;box-shadow:0 0 8px #66BB6A;animation:dotBlink 2s infinite}
+.live-dot.off{background:var(--red-l)}
+@keyframes dotBlink{0%,100%{opacity:1}50%{opacity:.4}}
+
+.bnav{position:fixed;bottom:0;left:0;right:0;z-index:200;background:linear-gradient(0deg,#020810,rgba(4,13,26,.95));border-top:1px solid var(--border2);display:flex;box-shadow:0 -4px 24px rgba(0,0,0,.6)}
+.bb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:7px 2px 10px;border:none;background:transparent;cursor:pointer;color:rgba(142,171,200,.5);font-size:9px;gap:3px;font-family:'Rajdhani',sans-serif;font-weight:600;letter-spacing:.8px;text-transform:uppercase;min-height:54px;transition:color .2s;position:relative}
+.bb svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;transition:filter .2s}
+.bb.active{color:var(--cyan)}
+.bb.active svg{filter:drop-shadow(0 0 6px var(--cyan))}
+.bb.active::before{content:'';position:absolute;top:0;left:20%;right:20%;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);border-radius:0 0 2px 2px}
+
+.page{display:none;padding:14px 14px 8px;max-width:720px;margin:0 auto;position:relative;z-index:1}
+.page.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.mod-t{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px}
+.mod-s{font-size:12px;color:var(--muted);margin-bottom:14px;letter-spacing:.3px}
+
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.stat-card{background:linear-gradient(135deg,var(--navy3),var(--navy2));border:1px solid var(--border);border-radius:10px;padding:14px;position:relative;overflow:hidden;transition:border-color .2s,box-shadow .2s}
+.stat-card:hover{border-color:var(--border2);box-shadow:0 0 20px rgba(0,184,212,.25)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.6}
+.stat-card.red::before{background:linear-gradient(90deg,transparent,var(--red-l),transparent)}
+.stat-card.gold::before{background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.stat-card.green::before{background:linear-gradient(90deg,transparent,var(--green-l),transparent)}
+.stat-label{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
+.stat-val{font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;line-height:1;color:#fff}
+.stat-val.danger{color:var(--red-l);text-shadow:0 0 12px rgba(239,83,80,.4)}
+.stat-val.warn{color:var(--gold);text-shadow:0 0 12px rgba(249,168,37,.3)}
+.stat-val.ok{color:var(--green-l);text-shadow:0 0 12px rgba(102,187,106,.3)}
+.stat-val.info{color:var(--cyan);text-shadow:0 0 12px rgba(0,184,212,.3)}
+.stat-sub{font-size:10px;color:var(--muted);margin-top:3px}
+
+.sect{display:flex;align-items:center;gap:8px;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:1.5px;margin:14px 0 8px}
+.sect::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent)}
+
+.alert-r{background:linear-gradient(135deg,rgba(198,40,40,.15),rgba(198,40,40,.05));border:1px solid rgba(239,83,80,.4);border-left:3px solid var(--red-l);border-radius:0 8px 8px 0;padding:11px 14px;margin-bottom:8px;font-size:12px;color:#FFCDD2;line-height:1.5}
+.alert-a{background:linear-gradient(135deg,rgba(249,168,37,.12),rgba(249,168,37,.04));border:1px solid rgba(249,168,37,.3);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:11px 14px;margin-bottom:8px;font-size:12px;color:#FFF8E1;line-height:1.5}
+.alert-ok{color:var(--green-l);font-size:13px;padding:8px 0}
+
+.caso-card{background:linear-gradient(135deg,var(--navy3),var(--navy2));border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;transition:border-color .2s}
+.caso-card:hover{border-color:var(--border2)}
+.caso-card.critico{border-left:3px solid var(--red-l)}
+.caso-card.alto{border-left:3px solid var(--gold)}
+.caso-card.medio{border-left:3px solid var(--cyan)}
+.caso-card.resuelto{border-left:3px solid var(--green-l);opacity:.75}
+.caso-hdr{padding:13px 14px;cursor:pointer;display:flex;flex-direction:column;gap:5px;transition:background .15s}
+.caso-hdr:active{background:rgba(255,255,255,.03)}
+.caso-top{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap}
+.caso-id{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.5px}
+.caso-tit{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;color:#fff;line-height:1.3;margin-top:2px}
+.caso-monto{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--cyan)}
+.badges{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;font-family:'Rajdhani',sans-serif;letter-spacing:.5px;text-transform:uppercase}
+.b-crit{background:rgba(198,40,40,.2);color:#EF9A9A;border:1px solid rgba(239,83,80,.4)}
+.b-alto{background:rgba(249,168,37,.15);color:#FFD54F;border:1px solid rgba(249,168,37,.3)}
+.b-act{background:rgba(0,184,212,.12);color:var(--cyan);border:1px solid var(--border2)}
+.b-res{background:rgba(46,125,50,.15);color:var(--green-l);border:1px solid rgba(102,187,106,.3)}
+.b-esc{background:rgba(249,168,37,.15);color:#FFD54F;border:1px solid rgba(249,168,37,.3)}
+.b-venc{background:rgba(255,23,68,.15);color:#FF8A80;border:1px solid rgba(255,23,68,.5);animation:vencParpadeo 1.5s ease-in-out infinite}
+@keyframes vencParpadeo{0%,100%{opacity:1}50%{opacity:.6}}
+
+.caso-body{border-top:1px solid var(--border);padding:14px;display:none;background:rgba(0,0,0,.2)}
+.caso-body.open{display:block;animation:fadeIn .15s ease}
+
+.tl{position:relative;padding-left:22px;margin:5px 0}
+.tl::before{content:'';position:absolute;left:7px;top:0;bottom:0;width:1px;background:linear-gradient(180deg,var(--cyan),rgba(0,184,212,.1))}
+.tli{position:relative;margin-bottom:12px}
+.tld{position:absolute;left:-15px;top:4px;width:9px;height:9px;border-radius:50%;background:var(--navy3);border:2px solid var(--muted)}
+.tld.done{background:var(--green-l);border-color:var(--green-l);box-shadow:0 0 8px rgba(102,187,106,.5)}
+.tld.warn{background:var(--gold);border-color:var(--gold);box-shadow:0 0 8px rgba(249,168,37,.4)}
+.tld.danger{background:var(--red-l);border-color:var(--red-l);box-shadow:0 0 8px rgba(239,83,80,.5);animation:dangerPulse 1.5s infinite}
+.tld.pending{background:transparent;border-color:rgba(0,184,212,.4);border-style:dashed}
+@keyframes dangerPulse{0%,100%{box-shadow:0 0 8px rgba(239,83,80,.5)}50%{box-shadow:0 0 16px rgba(239,83,80,.8)}}
+.tl-date{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.5px}
+.tl-txt{font-size:12px;font-weight:600;color:var(--white);margin-top:1px}
+.tl-sub{font-size:11px;color:var(--muted);margin-top:1px}
+
+.pb-wrap{margin:10px 0}
+.pb-labels{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:4px}
+.pb-track{height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;border:1px solid var(--border)}
+.pb-fill{height:100%;border-radius:3px;transition:width .8s ease}
+
+.ev-i{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)}
+.ev-i:last-child{border-bottom:none}
+.ev-ico{width:28px;height:28px;border-radius:5px;flex-shrink:0;background:rgba(0,184,212,.12);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--cyan);font-family:'JetBrains Mono',monospace}
+.ev-name{flex:1;font-size:12px;color:var(--white);line-height:1.3}
+.ev-meta{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.ev-hash{font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;background:rgba(0,0,0,.3);border:1px solid var(--border);padding:2px 6px;border-radius:3px}
+
+.hash-box{background:rgba(0,0,0,.4);border:1px solid rgba(0,184,212,.2);border-radius:6px;padding:8px 10px;font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--cyan);word-break:break-all;margin:5px 0;letter-spacing:.3px}
+.v-badge{display:inline-flex;align-items:center;gap:3px;background:rgba(46,125,50,.2);color:var(--green-l);font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700;margin-left:5px;border:1px solid rgba(102,187,106,.3)}
+.hall-box{background:rgba(249,168,37,.06);border:1px solid rgba(249,168,37,.2);border-left:3px solid var(--gold);padding:9px 12px;border-radius:0 7px 7px 0;font-size:12px;color:#FFF8E1;margin:8px 0;line-height:1.5}
+
+.arow{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
+button{cursor:pointer;font-family:'Source Sans 3',sans-serif}
+.btn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);color:var(--muted);padding:8px 13px;border-radius:7px;font-size:12px;transition:all .2s}
+.btn:hover{background:rgba(255,255,255,.08);color:var(--white);border-color:rgba(255,255,255,.2)}
+.btn-esc{background:rgba(198,40,40,.15);border:1px solid rgba(239,83,80,.4);color:#EF9A9A;padding:8px 13px;border-radius:7px;font-size:12px;font-weight:600;transition:all .2s}
+.btn-esc:hover{background:rgba(198,40,40,.25)}
+.btn-res{background:rgba(46,125,50,.15);border:1px solid rgba(102,187,106,.3);color:var(--green-l);padding:8px 13px;border-radius:7px;font-size:12px;font-weight:600;transition:all .2s}
+.btn-prim{background:linear-gradient(135deg,var(--blue),#0D47A1);color:#fff;border:1px solid rgba(21,101,192,.6);padding:13px 18px;border-radius:8px;font-size:14px;font-weight:600;width:100%;margin-top:5px;box-shadow:0 4px 20px rgba(21,101,192,.3);transition:all .2s;font-family:'Rajdhani',sans-serif;letter-spacing:.5px;text-transform:uppercase}
+.btn-prim:hover{background:linear-gradient(135deg,var(--blue-l),var(--blue));box-shadow:0 4px 28px rgba(21,101,192,.5)}
+.btn-prim:disabled{background:rgba(255,255,255,.05);color:var(--muted);box-shadow:none;cursor:not-allowed;border-color:var(--border)}
+.btn-prim.success{background:linear-gradient(135deg,var(--green),#1B5E20);border-color:rgba(46,125,50,.5);box-shadow:0 4px 20px rgba(46,125,50,.3)}
+
+.card{background:linear-gradient(135deg,var(--navy3),var(--navy2));border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;position:relative}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent)}
+.fld{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.fld label{font-size:10px;color:var(--cyan);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1px}
+.fld input,.fld select,.fld textarea{background:rgba(0,0,0,.4);border:1px solid rgba(0,184,212,.2);border-radius:7px;padding:10px 12px;font-size:14px;color:var(--white);font-family:'Source Sans 3',sans-serif;-webkit-appearance:none;width:100%;transition:border-color .2s,box-shadow .2s}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,184,212,.15)}
+.fld select option{background:var(--navy3);color:var(--white)}
+.fld textarea{resize:vertical;min-height:75px;line-height:1.5}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+.ai-box{background:linear-gradient(135deg,rgba(21,101,192,.1),rgba(13,71,161,.05));border:1px solid rgba(30,136,229,.3);border-radius:8px;padding:12px;font-size:12px;line-height:1.7;margin-top:8px;display:none;color:var(--white);position:relative}
+.ai-box::before{content:'AI';position:absolute;top:8px;right:10px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--cyan);letter-spacing:1px;opacity:.5}
+.typing{display:inline-block;width:5px;height:12px;background:var(--cyan);animation:blink 1s infinite;vertical-align:text-bottom;margin-left:3px;box-shadow:0 0 6px var(--cyan)}
+@keyframes blink{0%,50%{opacity:1}51%,100%{opacity:0}}
+
+.seace-row{background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;transition:border-color .2s}
+.seace-row:hover{border-color:var(--border2)}
+.seace-real{border-left:2px solid var(--green-l)}
+.seace-cod{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:4px}
+.seace-obj{font-size:13px;font-weight:600;color:var(--white);margin-bottom:4px;line-height:1.3}
+.seace-meta{font-size:11px;color:var(--muted)}
+.seace-monto{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--cyan);font-weight:600}
+
+.hash-ok{background:linear-gradient(135deg,rgba(46,125,50,.15),rgba(27,94,32,.08));border:1px solid rgba(102,187,106,.3);border-radius:8px;padding:12px;margin-bottom:10px;display:none}
+
+.filter-row{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px}
+.filter-pill{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:var(--muted);padding:6px 14px;border-radius:20px;font-size:12px;white-space:nowrap;flex-shrink:0;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:600;letter-spacing:.3px;text-transform:uppercase;transition:all .2s}
+.filter-pill:hover{border-color:var(--border2);color:var(--white)}
+.filter-pill.active{background:rgba(0,184,212,.15);border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 12px rgba(0,184,212,.2)}
+
+.gps-badge{display:inline-block;background:rgba(0,184,212,.08);border:1px solid var(--border2);border-radius:6px;padding:6px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--cyan);margin:6px 0}
+.gps-badge.locked{color:var(--green-l);border-color:rgba(102,187,106,.4);background:rgba(46,125,50,.1)}
+.foto-prev{width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin:8px 0;display:none;border:1px solid var(--border)}
+
+.info-box{background:linear-gradient(135deg,rgba(0,184,212,.08),rgba(0,184,212,.03));border:1px solid rgba(0,184,212,.2);border-radius:8px;padding:11px 13px;font-size:12px;color:#B2EBF2;line-height:1.6;margin-bottom:12px}
+.notif-row{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}
+.notif-row:last-child{border-bottom:none}
+.notif-ok{width:7px;height:7px;border-radius:50%;background:var(--green-l);box-shadow:0 0 6px var(--green-l);flex-shrink:0;margin-top:3px}
+.notif-fail{width:7px;height:7px;border-radius:50%;background:var(--red-l);flex-shrink:0;margin-top:3px}
+.empty{padding:28px;text-align:center;color:var(--muted);font-size:13px}
+
+.btn-prim.danger{background:linear-gradient(135deg,var(--red),#7B0000);
+  border-color:rgba(198,40,40,.5);box-shadow:0 4px 20px rgba(198,40,40,.3)}
+.oficio-out{background:#fff;color:#1a1a2e;border:2px solid #0C2340;border-radius:10px;padding:24px;font-size:13px;line-height:1.9;margin-top:10px;display:none;font-family:'Source Sans 3',sans-serif}
+.of-asunto{border-left:4px solid #C62828;padding:7px 12px;margin:9px 0;background:#fff8f8}
+.of-ref{border-left:4px solid #1565C0;padding:7px 12px;margin:9px 0;background:#f0f4ff;font-style:italic;font-size:12px}
+.of-h{background:#fffbe6;border-left:3px solid #F9A825;padding:7px 12px;margin:5px 0;font-size:12px}
+.of-firma{margin-top:28px;text-align:center;line-height:2}
+.of-cc{margin-top:12px;font-size:11px;color:#666;border-top:1px solid #dde;padding-top:7px}
+@media print{.topbar,.bnav,.no-print{display:none!important}body{background:#fff;color:#000;padding:0}.oficio-out{display:block!important;border:none}}
+</style>
+</head>
+<body>
+<!-- PWA Install Banner -->
+<div id="install-banner" style="display:none;position:fixed;bottom:80px;left:12px;right:12px;z-index:999;
+  background:linear-gradient(135deg,#0A1F38,#071628);
+  border:1px solid rgba(0,184,212,.4);border-radius:12px;
+  padding:14px 16px;box-shadow:0 8px 32px rgba(0,0,0,.6),0 0 20px rgba(0,184,212,.2)">
+  <div style="display:flex;align-items:center;gap:12px">
+    <div style="width:44px;height:44px;background:linear-gradient(135deg,#C62828,#8B0000);
+      border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2L4 6v6c0 5.5 3.8 10.7 8 12 4.2-1.3 8-6.5 8-12V6L12 2z"/>
+        <polyline points="9 12 11 14 15 10"/>
+      </svg>
+    </div>
+    <div style="flex:1">
+      <div style="font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:#fff;letter-spacing:.5px">
+        Instalar Vigía de Integridad
+      </div>
+      <div style="font-size:11px;color:#8EABC8;margin-top:1px">
+        Agregar a pantalla de inicio como app
+      </div>
+    </div>
+    <button id="btn-install-yes" onclick="instalarApp()"
+      style="background:linear-gradient(135deg,#00B8D4,#0097A7);color:#fff;border:none;
+        border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;
+        font-family:'Rajdhani',sans-serif;cursor:pointer;letter-spacing:.5px;white-space:nowrap">
+      INSTALAR
+    </button>
+    <button onclick="document.getElementById('install-banner').style.display='none'"
+      style="background:transparent;border:none;color:#8EABC8;font-size:20px;cursor:pointer;padding:4px;line-height:1">
+      ✕
+    </button>
+  </div>
+</div>
+
+<!-- iOS Install Guide (shown only on iOS Safari) -->
+<div id="ios-guide" style="display:none;position:fixed;bottom:80px;left:12px;right:12px;z-index:999;
+  background:linear-gradient(135deg,#0A1F38,#071628);
+  border:1px solid rgba(0,184,212,.4);border-radius:12px;
+  padding:14px 16px;box-shadow:0 8px 32px rgba(0,0,0,.6)">
+  <div style="font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:#00B8D4;
+    letter-spacing:.5px;margin-bottom:8px">INSTALAR EN IPHONE</div>
+  <div style="font-size:12px;color:#F0F4FF;line-height:1.8">
+    1. Toca el botón compartir <strong style="color:#00B8D4">□↑</strong> en Safari<br>
+    2. Toca <strong style="color:#00B8D4">"Agregar a pantalla de inicio"</strong><br>
+    3. Toca <strong style="color:#00B8D4">"Agregar"</strong> — ¡listo, aparece como app!
+  </div>
+  <button onclick="document.getElementById('ios-guide').style.display='none'"
+    style="background:transparent;border:1px solid rgba(0,184,212,.3);color:#8EABC8;
+      border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;margin-top:10px;width:100%">
+    Entendido
+  </button>
+</div>
+
+
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="brand-shield">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2L4 6v6c0 5.5 3.8 10.7 8 12 4.2-1.3 8-6.5 8-12V6L12 2z"/>
+        <polyline points="9 12 11 14 15 10"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-name">Vigía de Integridad</div>
+      <div class="brand-sub">Sub-Prefectura · Urubamba · Cusco · v4.1</div>
+    </div>
+  </div>
+  <div class="topbar-status">
+    <div class="status-pill">
+      <span class="live-dot off" id="odot"></span>
+      <span id="olabel" style="font-size:10px">···</span>
+    </div>
+    <button onclick="cerrarSesion()" title="Cerrar sesión"
+      style="background:rgba(198,40,40,.15);border:1px solid rgba(239,83,80,.3);
+             border-radius:6px;padding:5px 10px;cursor:pointer;
+             font-family:'JetBrains Mono',monospace;font-size:10px;
+             color:#EF9A9A;letter-spacing:.5px;transition:all .2s">
+      SALIR
+    </button>
+  </div>
+</div>
+
+<div id="page-dash" class="page active">
+  <div class="mod-t">Panel de Control</div>
+  <div class="mod-s">Sistema de auditoría con IA · Monitoreo en tiempo real</div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">Casos registrados</div><div class="stat-val info" id="s-tot">—</div><div class="stat-sub">En base de datos</div></div>
+    <div class="stat-card red"><div class="stat-label">Plazo vencido</div><div class="stat-val danger" id="s-venc">—</div><div class="stat-sub">Sin respuesta</div></div>
+    <div class="stat-card gold"><div class="stat-label">Escalados</div><div class="stat-val warn" id="s-esc">—</div><div class="stat-sub">Contraloría/Fiscalía</div></div>
+    <div class="stat-card green"><div class="stat-label">Monto vigilado</div><div class="stat-val ok" id="s-monto" style="font-size:20px">—</div><div class="stat-sub">Acumulado activos</div></div>
+    <div class="stat-card"><div class="stat-label">Fotos de campo</div><div class="stat-val info" id="s-fotos">—</div><div class="stat-sub">Con GPS</div></div>
+    <div class="stat-card green"><div class="stat-label">Alertas email</div><div class="stat-val ok" id="s-notif">—</div><div class="stat-sub">Enviadas</div></div>
+  </div>
+  <div id="alertas-dash"></div>
+  <div class="sect">Próximos a vencer</div>
+  <div id="proximos-dash"></div>
+  <div style="text-align:center;margin-top:14px">
+    <a href="/publico" target="_blank" style="color:var(--cyan);font-size:12px;text-decoration:none;font-family:'JetBrains Mono',monospace;opacity:.6">
+      ↗ Panel ciudadano público
+    </a>
+  </div>
+</div>
+
+<div id="page-casos" class="page">
+  <div class="mod-t">Seguimiento de Casos</div>
+  <div class="mod-s">Toca un caso para ver detalles, evidencias y acciones</div>
+  <div class="filter-row">
+    <button class="filter-pill active" onclick="filtrar('todos',this)">Todos</button>
+    <button class="filter-pill" onclick="filtrar('activo',this)">Activos</button>
+    <button class="filter-pill" onclick="filtrar('vencido',this)">Vencidos</button>
+    <button class="filter-pill" onclick="filtrar('escalado',this)">Escalados</button>
+    <button class="filter-pill" onclick="filtrar('resuelto',this)">Resueltos</button>
+  </div>
+  <div id="lista-casos"></div>
+</div>
+
+<div id="page-nuevo" class="page">
+  <div class="mod-t">Registrar Caso</div>
+  <div class="mod-s">Hash SHA-256 garantiza la evidencia legal ante Contraloría o Fiscalía</div>
+  <div class="card">
+    <div class="g2">
+      <div class="fld"><label>N° SEACE *</label><input type="text" id="n-seace" placeholder="LP-2026-042-MPU"></div>
+      <div class="fld"><label>Monto S/</label><input type="text" id="n-monto" placeholder="17,450,000"></div>
+    </div>
+    <div class="fld"><label>Nombre de la obra *</label><input type="text" id="n-obra" placeholder="Construcción Parque Recreacional Charcahuaylla"></div>
+    <div class="fld"><label>Institución auditada</label><input type="text" id="n-inst" placeholder="M.P. Urubamba"></div>
+    <div class="fld"><label>Destinatario del oficio</label><input type="text" id="n-dest" placeholder="Alcalde M.P. Urubamba"></div>
+    <div class="g2">
+      <div class="fld"><label>Fecha envío oficio</label><input type="date" id="n-fecha"></div>
+      <div class="fld"><label>N° de oficio</label><input type="text" id="n-of" placeholder="001-2026-URB"></div>
+    </div>
+    <div class="g2">
+      <div class="fld"><label>Tipo de irregularidad</label>
+        <select id="n-tipo"><option value="sobreprecio">Sobreprecio</option><option value="vinculo">Vínculo/Conflicto</option><option value="fraccionamiento">Fraccionamiento</option><option value="capacidad">Cap. operativa</option><option value="cronograma">Cronograma</option><option value="multiple">Múltiple</option></select>
+      </div>
+      <div class="fld"><label>Nivel de riesgo</label>
+        <select id="n-riesgo"><option value="critico">Crítico</option><option value="alto">Alto</option><option value="medio">Medio</option></select>
+      </div>
+    </div>
+    <div class="fld"><label>Hallazgo principal *</label>
+      <textarea id="n-hall" placeholder="Describe la irregularidad con datos concretos: porcentajes, montos, nombres, artículos de ley..."></textarea>
+    </div>
+    <button class="btn-prim" id="btn-reg" onclick="registrar()">Registrar y Generar Hash SHA-256</button>
+  </div>
+  <div class="hash-ok" id="hash-res">
+    <div style="font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:var(--green-l);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">✓ Caso guardado <span class="v-badge">SHA-256</span></div>
+    <div class="hash-box" id="hash-val"></div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px">Guarda este código como prueba legal ante la Contraloría o Fiscalía.</div>
+  </div>
+  <div class="ai-box" id="ia-nvo"></div>
+</div>
+
+<div id="page-seace" class="page">
+  <div class="mod-t">Consultar SEACE</div>
+  <div class="mod-s">Busca expedientes técnicos y licitaciones del sistema nacional de contrataciones</div>
+  <div class="card">
+    <div class="fld"><label>Entidad o término de búsqueda</label><input type="text" id="seace-term" placeholder="Urubamba, Chinchero, pavimentación..."></div>
+    <div class="g2">
+      <div class="fld"><label>Año</label><select id="seace-anio"><option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option></select></div>
+      <div class="fld"><label>Tipo</label><select id="seace-tipo"><option value="">Todos</option><option value="LP">Licitación Pública</option><option value="AS">Adjudicación Simplificada</option><option value="CD">Contratación Directa</option></select></div>
+    </div>
+    <button class="btn-prim" id="btn-seace" onclick="buscarSEACE()">Buscar en SEACE</button>
+  </div>
+  <div id="seace-res"><div class="empty">Ingresa un término y presiona Buscar</div></div>
+</div>
+
+<div id="page-analizar" class="page">
+  <div class="mod-t">Auditor con IA</div>
+  <div class="mod-s">El auditor aplica la Ley N° 30225. Requiere conexión a internet.</div>
+  <div class="card">
+    <div class="fld"><label>Tipo de análisis</label>
+      <select id="a-tipo"><option value="general">Análisis general de riesgo</option><option value="precios">Detección de sobrecostos</option><option value="colusion">Vínculos y colusión</option><option value="cronograma">Validación de cronograma</option><option value="fraccionamiento">Fraccionamiento ilegal</option></select>
+    </div>
+    <div class="fld"><label>Código SEACE</label><input type="text" id="a-seace" placeholder="LP-2026-042-MPU"></div>
+    <div class="fld"><label>Datos del expediente *</label>
+      <textarea id="a-txt" style="min-height:105px" placeholder="Pega o escribe datos: obra, monto, empresa, precios unitarios, nombres del comité..."></textarea>
+    </div>
+    <button class="btn-prim" id="btn-an" onclick="analizar()">Auditar con IA</button>
+  </div>
+  <div class="ai-box" id="res-an" style="display:block;background:rgba(0,0,0,.3);border-color:var(--border);color:var(--muted)">El análisis aparecerá aquí...</div>
+</div>
+
+<div id="page-oficios" class="page">
+  <div class="mod-t">Generar Oficio</div>
+  <div class="mod-s">Oficio oficial completo · Usa Imprimir para guardarlo como PDF</div>
+  <div class="card no-print">
+    <div class="g2">
+      <div class="fld"><label>N° de oficio</label><input type="text" id="o-num" placeholder="004-2026-URB"></div>
+      <div class="fld"><label>Fecha</label><input type="date" id="o-fecha"></div>
+    </div>
+    <div class="fld"><label>Nombre del destinatario</label><input type="text" id="o-dest" placeholder="Nombre del alcalde o gerente"></div>
+    <div class="fld"><label>Cargo del destinatario</label><input type="text" id="o-cargo" placeholder="Alcalde de la M.P. de Urubamba"></div>
+    <div class="fld"><label>Obra / proceso</label><input type="text" id="o-obra" placeholder="LP-2026-042 · Parque Charcahuaylla · S/ 17,450,000"></div>
+    <div class="fld"><label>Tipo de oficio</label>
+      <select id="o-tipo"><option value="aclaracion">Solicitud de aclaración técnica</option><option value="escalada">Escalada a Contraloría General</option><option value="denuncia">Denuncia ante OCI</option></select>
+    </div>
+    <div class="fld"><label>Hallazgos (uno por línea)</label>
+      <textarea id="o-hall" style="min-height:85px" placeholder="Sobreprecio asfalto +34%: S/48.50 vs S/36.20/m2&#10;Vínculo postor–Comité (SUNARP 2024)&#10;Empresa sin capacidad operativa"></textarea>
+    </div>
+    <div class="fld"><label>Copia a</label><input type="text" id="o-cc" value="OCI M.P. Urubamba, Contraloría General de la República, Fiscalía Anticorrupción Cusco"></div>
+    <div style="display:flex;gap:8px;margin-top:5px">
+      <button class="btn-prim" style="flex:1;margin-top:0" onclick="genOficio()">Generar Oficio Oficial</button>
+      <button class="btn" onclick="window.print()" style="min-height:48px;white-space:nowrap;padding:8px 16px">Imprimir PDF</button>
+    </div>
+  </div>
+  <div class="oficio-out" id="oficio-out">
+    <h3 style="text-align:center;color:#0C2340;font-size:13px;line-height:1.5;margin-bottom:4px">REPÚBLICA DEL PERÚ · MINISTERIO DEL INTERIOR<br>SUB-PREFECTURA PROVINCIAL DE URUBAMBA</h3>
+    <div id="of-body"></div>
+  </div>
+</div>
+
+<div id="page-mas" class="page">
+  <div class="mod-t">Más Funciones</div>
+  <div class="mod-s">Fotos de campo, alertas email y verificación de evidencias</div>
+  <div class="sect">Foto de campo con GPS</div>
+  <div class="card">
+    <div class="fld"><label>Caso al que pertenece</label><select id="foto-caso"><option value="">Selecciona un caso...</option></select></div>
+    <div class="fld"><label>Descripción de lo que muestra la foto</label><input type="text" id="foto-desc" placeholder="Ej: Muro sin mortero visible, obra paralizada"></div>
+    <div class="gps-badge" id="gps-label">Buscando ubicación GPS...</div>
+    <input type="file" id="foto-input" accept="image/*" capture="environment" style="display:none" onchange="previewFoto(this)">
+    <img id="foto-preview" class="foto-prev">
+    <div style="display:flex;gap:8px;margin-top:9px">
+      <button class="btn" onclick="document.getElementById('foto-input').click()" style="flex:1;padding:10px">📷 Tomar / Elegir foto</button>
+      <button class="btn-prim success" id="btn-foto" onclick="subirFoto()" style="flex:1;margin-top:0" disabled>Guardar con GPS</button>
+    </div>
+    <div class="ai-box" id="foto-res"></div>
+  </div>
+  <div class="sect">Verificar cadena de custodia</div>
+  <div class="card">
+    <div style="display:flex;gap:8px">
+      <input type="text" id="ver-in" placeholder="Pega el hash SHA-256 a verificar..." style="flex:1;background:rgba(0,0,0,.4);border:1px solid var(--border2);border-radius:7px;padding:10px 12px;font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--cyan)">
+      <button class="btn" onclick="verificar()" style="padding:10px 16px;white-space:nowrap">Verificar</button>
+    </div>
+    <div id="ver-res" style="font-size:12px;margin-top:8px;min-height:15px;color:var(--muted);font-family:'JetBrains Mono',monospace"></div>
+  </div>
+  <div class="sect">Alertas automáticas por email</div>
+  <div class="card">
+    <div class="info-box">El sistema envía alertas cuando un caso está por vencer o ya venció su plazo legal. Necesitas Gmail con "Contraseña de aplicación" (actívala en Google → Seguridad → Contraseñas de aplicación).</div>
+    <div class="fld"><label>Tu email Gmail</label><input type="email" id="cfg-email" placeholder="tumail@gmail.com"></div>
+    <div class="fld"><label>Contraseña de aplicación (16 caracteres)</label><input type="password" id="cfg-pass" placeholder="xxxx xxxx xxxx xxxx"></div>
+    <div class="fld"><label>Email donde recibirás las alertas</label><input type="email" id="cfg-dest" placeholder="puede ser el mismo u otro email"></div>
+    <div class="g2">
+      <div class="fld"><label>Alertar cuando queden</label><select id="cfg-dias"><option value="1">1 día hábil</option><option value="2" selected>2 días hábiles</option><option value="3">3 días hábiles</option></select></div>
+      <div class="fld"><label>Alertas activas</label><select id="cfg-activa"><option value="false">No activadas</option><option value="true">Activadas</option></select></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn-prim success" onclick="guardarConfig()" style="flex:2;margin-top:0">Guardar configuración</button>
+      <button class="btn" onclick="probarEmail()" style="flex:1;min-height:48px">Probar</button>
+    </div>
+    <div id="cfg-res" style="font-size:12px;margin-top:8px;min-height:14px;color:var(--muted)"></div>
+  </div>
+  <div class="sect">Historial de alertas enviadas</div>
+  <div class="card">
+    <div id="notif-log"><div class="empty" style="padding:12px">Cargando...</div></div>
+    <button class="btn" onclick="forzarAlertas()" style="width:100%;margin-top:10px;padding:10px">Verificar plazos y enviar alertas ahora</button>
+  </div>
+</div>
+
+<div class="bnav">
+  <button class="bb active" id="bn-dash" onclick="go('dash',this)">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Panel
+  </button>
+  <button class="bb" id="bn-casos" onclick="go('casos',this)">
+    <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>Casos
+  </button>
+  <button class="bb" id="bn-nuevo" onclick="go('nuevo',this)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Registrar
+  </button>
+  <button class="bb" id="bn-seace" onclick="go('seace',this)">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>SEACE
+  </button>
+  <button class="bb" id="bn-analizar" onclick="go('analizar',this)">
+    <svg viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>IA
+  </button>
+  <button class="bb" id="bn-oficios" onclick="go('oficios',this)">
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>Oficio
+  </button>
+  <button class="bb" id="bn-mas" onclick="go('mas',this)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>Más
+  </button>
+</div>
+
+<script>
+const API='',HOY=new Date(),PLAZO=7;
+let CASOS=[],FILTRO='todos',GPS_LAT=null,GPS_LNG=null,FOTO_B64=null;
+document.getElementById('n-fecha').value=HOY.toISOString().split('T')[0];
+document.getElementById('o-fecha').value=HOY.toISOString().split('T')[0];
+document.getElementById('top-fecha').textContent=HOY.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'});
+function checkOnline(){const d=document.getElementById('odot'),l=document.getElementById('olabel');if(navigator.onLine){d.className='live-dot on';l.textContent='En línea';}else{d.className='live-dot off';l.textContent='Sin internet';}}
+window.addEventListener('online',()=>{checkOnline();cargarDash();});
+window.addEventListener('offline',checkOnline);
+checkOnline();setInterval(checkOnline,10000);
+function iniciarGPS(){if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(p=>{GPS_LAT=p.coords.latitude.toFixed(6);GPS_LNG=p.coords.longitude.toFixed(6);const el=document.getElementById('gps-label');el.textContent=`GPS: ${GPS_LAT}, ${GPS_LNG} ✓`;el.className='gps-badge locked';},()=>{document.getElementById('gps-label').textContent='GPS: Activa el GPS del celular';},{enableHighAccuracy:true,timeout:10000});}
+function previewFoto(input){const file=input.files[0];if(!file)return;const r=new FileReader();r.onload=e=>{FOTO_B64=e.target.result;const img=document.getElementById('foto-preview');img.src=FOTO_B64;img.style.display='block';document.getElementById('btn-foto').disabled=false;};r.readAsDataURL(file);}
+async function subirFoto(){const cid=document.getElementById('foto-caso').value,desc=document.getElementById('foto-desc').value.trim();if(!cid){alert('Selecciona el caso primero.');return;}if(!FOTO_B64){alert('Primero toma o elige una foto.');return;}const btn=document.getElementById('btn-foto');btn.disabled=true;btn.textContent='Guardando...';try{const r=await fetch(API+`/api/casos/${cid}/foto`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({datos_base64:FOTO_B64,descripcion:desc||'Foto de campo',latitud:GPS_LAT,longitud:GPS_LNG,direccion:GPS_LAT?`${GPS_LAT}, ${GPS_LNG} — Urubamba, Cusco`:''})});const d=await r.json();if(!d.ok){alert(d.error||'Error al guardar');return;}const fb=document.getElementById('foto-res');fb.style.display='block';fb.innerHTML=`<strong style="color:var(--green-l)">✓ Foto guardada</strong><br>Hash: <span style="color:var(--cyan);font-family:'JetBrains Mono',monospace">${d.hash}</span><br>GPS: ${GPS_LAT||'—'}, ${GPS_LNG||'—'}`;document.getElementById('foto-input').value='';document.getElementById('foto-preview').style.display='none';FOTO_B64=null;}catch(e){alert('Error de conexión.');}btn.disabled=false;btn.textContent='Guardar con GPS';}
+function go(id,el){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.bb').forEach(b=>b.classList.remove('active'));document.getElementById('page-'+id).classList.add('active');if(el)el.classList.add('active');window.scrollTo(0,0);if(id==='dash')cargarDash();if(id==='casos')cargarCasos();if(id==='mas'){cargarConfig();cargarNotifLog();iniciarGPS();cargarSelectCasos();}}
+function ff(d){if(!d)return'—';return new Date(d+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'});}
+function ffL(d){if(!d)return'';const f=new Date(d+'T12:00:00'),m=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];return `${f.getDate()} de ${m[f.getMonth()]} de ${f.getFullYear()}`;}
+function dr(fe){if(!fe)return null;const v=new Date(fe+'T12:00:00');v.setDate(v.getDate()+PLAZO);return Math.ceil((v-HOY)/864e5);}
+function eb(c){const d=dr(c.fecha_envio);if(c.estado==='resuelto')return'<span class="badge b-res">Resuelto</span>';if(c.estado==='escalado')return'<span class="badge b-esc">Escalado</span>';if(d!==null&&d<=0)return'<span class="badge b-venc">⚠ Plazo vencido</span>';if(d!==null&&d<=2)return`<span class="badge b-alto">Vence en ${d}d</span>`;if(d!==null)return`<span class="badge b-act">Activo · ${d}d</span>`;return'<span class="badge b-act">Activo</span>';}
+function rb(r){return{critico:'<span class="badge b-crit">⬤ Crítico</span>',alto:'<span class="badge b-alto">⬤ Alto</span>',medio:'<span class="badge b-act">⬤ Medio</span>'}[r]||'';}
+async function cargarDash(){try{const[stats,casos]=await Promise.all([fetch(API+'/api/stats').then(r=>r.json()),fetch(API+'/api/casos').then(r=>r.json())]);document.getElementById('s-tot').textContent=stats.total;document.getElementById('s-venc').textContent=stats.vencidos;document.getElementById('s-esc').textContent=stats.escalados;document.getElementById('s-fotos').textContent=stats.fotos||0;document.getElementById('s-notif').textContent=stats.alertas_enviadas||0;const m=stats.monto;document.getElementById('s-monto').textContent=m>=1e6?'S/ '+(m/1e6).toFixed(1)+'M':m>=1000?'S/ '+Math.round(m/1000)+'K':'S/ '+Math.round(m);const ad=document.getElementById('alertas-dash');ad.innerHTML='';const pd=document.getElementById('proximos-dash');pd.innerHTML='';casos.forEach(c=>{const d=dr(c.fecha_envio);if(c.estado==='resuelto'||c.estado==='escalado')return;if(d!==null&&d<=0)ad.innerHTML+=`<div class="alert-r"><strong>⚠ PLAZO VENCIDO</strong> — ${c.id}<br>"${c.obra.substring(0,55)}..."<br><strong>Acción urgente: escalar a Contraloría General.</strong></div>`;else if(d!==null&&d<=3)ad.innerHTML+=`<div class="alert-a"><strong>Vence en ${d} día(s)</strong> — ${c.id}: "${c.obra.substring(0,55)}..."</div>`;if(d!==null&&d>=0&&d<=7)pd.innerHTML+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)"><div style="flex:1"><div style="font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;color:var(--white)">${c.id}</div><div style="font-size:12px;color:var(--muted);margin-top:2px">${c.obra.substring(0,58)}...</div></div><span class="badge ${d<=2?'b-crit':'b-alto'}">Vence en ${d}d</span></div>`;});if(!ad.innerHTML)ad.innerHTML='<div class="alert-ok">✓ Sin alertas urgentes en este momento.</div>';if(!pd.innerHTML)pd.innerHTML='<div class="empty" style="padding:14px">Sin casos por vencer esta semana.</div>';}catch(e){document.getElementById('alertas-dash').innerHTML='<div class="alert-r">No se puede conectar al servidor. ¿Está corriendo servidor.py?</div>';}}
+async function cargarCasos(){document.getElementById('lista-casos').innerHTML='<div class="empty">Cargando...</div>';try{CASOS=await fetch(API+'/api/casos').then(r=>r.json());renderCasos();}catch(e){document.getElementById('lista-casos').innerHTML='<div class="empty">Error al cargar casos.</div>';}}
+function filtrar(f,el){FILTRO=f;document.querySelectorAll('.filter-pill').forEach(b=>b.classList.remove('active'));if(el)el.classList.add('active');renderCasos();}
+function renderCasos(){const cont=document.getElementById('lista-casos');cont.innerHTML='';let lista=CASOS;if(FILTRO!=='todos'){lista=lista.filter(c=>{const d=dr(c.fecha_envio),ev=c.estado!=='resuelto'&&c.estado!=='escalado'&&d!==null&&d<=0;if(FILTRO==='vencido')return ev;if(FILTRO==='activo')return!ev&&c.estado==='activo';if(FILTRO==='escalado')return c.estado==='escalado';if(FILTRO==='resuelto')return c.estado==='resuelto';return true;});}if(!lista.length){cont.innerHTML='<div class="empty">No hay casos en esta categoría.</div>';return;}lista.forEach(c=>{const d=dr(c.fecha_envio),pct=d!==null?Math.min(100,Math.max(0,Math.round(((PLAZO-Math.max(0,d))/PLAZO)*100))):100,pc=d!==null&&d<=0?'var(--red-l)':d!==null&&d<=2?'var(--gold)':'var(--green-l)',nf=(c.fotos||[]).length,cls=c.estado==='resuelto'?'resuelto':(c.riesgo||'medio');const div=document.createElement('div');div.className=`caso-card ${cls}`;div.innerHTML=`<div class="caso-hdr" onclick="toggleB('b-${c.id}')"><div class="caso-top"><span class="caso-id">${c.id}</span><div class="badges">${eb(c)}${rb(c.riesgo)}${nf>0?`<span class="badge b-act">📷 ${nf}</span>`:''}</div></div><div class="caso-tit">${c.obra}</div><div class="caso-monto">S/ ${c.monto||'—'} &nbsp;·&nbsp; ${c.num_oficio||'Sin oficio'}</div></div><div class="caso-body" id="b-${c.id}"><div class="sect" style="margin-top:0">Línea de tiempo</div><div class="tl">${(c.eventos||[]).map(e=>`<div class="tli"><div class="tld ${e.tipo}"></div><div class="tl-date">${ff(e.fecha)}</div><div class="tl-txt">${e.texto}</div>${e.sub?`<div class="tl-sub">${e.sub}</div>`:''}</div>`).join('')}</div><div class="pb-wrap"><div class="pb-labels"><span>Plazo legal (7 días hábiles)</span><span>${d!==null?(d<=0?'VENCIDO':`Día ${PLAZO-Math.max(0,d)}/${PLAZO}`):''}</span></div><div class="pb-track"><div class="pb-fill" style="width:${pct}%;background:${pc}"></div></div><div style="font-size:10px;color:var(--muted);margin-top:3px;font-family:'JetBrains Mono',monospace">${d!==null&&d>0?`Vence: ${ff(new Date(new Date(c.fecha_envio+'T12:00:00').getTime()+(PLAZO*864e5)))}`:d!==null&&d<=0?'Sin respuesta — Escalar a Contraloría de inmediato':''}</div></div>${nf>0?`<div class="sect">Fotos de campo (${nf})</div><div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px">${(c.fotos||[]).map(f=>`<div style="flex-shrink:0;text-align:center"><img src="${f.datos_base64||''}" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--border)" onerror="this.style.display='none'"><div style="font-size:9px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace">${f.hash}</div></div>`).join('')}</div>`:''}<div class="sect">Evidencias documentales</div><div>${(c.evidencias||[]).map(ev=>`<div class="ev-i"><div class="ev-ico">${(ev.tipo_doc||'DOC').substring(0,3).toUpperCase()}</div><div class="ev-name">${ev.nombre}<br><span class="ev-meta">${ff(ev.fecha)}</span></div><span class="ev-hash">${ev.hash}</span></div>`).join('')||'<div style="font-size:12px;color:var(--muted);padding:5px 0">Sin evidencias adjuntas.</div>'}</div><div style="font-size:10px;color:var(--muted);margin-top:10px;font-family:'JetBrains Mono',monospace">HASH SHA-256 <span class="v-badge">INMUTABLE</span></div><div class="hash-box">${c.hash||'—'}</div><div class="hall-box">${c.hallazgo}</div><div class="arow"><button class="btn" onclick="consultarIA('${c.id}')">Consultar IA</button><button class="btn" onclick="addEv('${c.id}')">+ Evidencia</button>${c.estado!=='escalado'&&c.estado!=='resuelto'?`<button class="btn-esc" onclick="escalar('${c.id}')">Escalar a Contraloría</button>`:''}${c.estado!=='resuelto'?`<button class="btn-res" onclick="resolver('${c.id}')">Marcar resuelto</button>`:''}</div><div class="ai-box" id="ai-${c.id}"></div></div>`;cont.appendChild(div);});}
+function toggleB(id){const e=document.getElementById(id);if(e)e.classList.toggle('open');}
+async function consultarIA(id){const c=CASOS.find(x=>x.id===id);if(!c)return;const box=document.getElementById('ai-'+id);box.style.display='block';box.innerHTML='Consultando auditor IA...<span class="typing"></span>';try{const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,system:'Eres Auditor Senior de la Contraloría del Perú. Español, máximo 160 palabras.',messages:[{role:'user',content:`Caso: ${c.obra} (${c.seace}), S/ ${c.monto}. Hallazgo: ${c.hallazgo}. Estado: ${c.estado}. Días: ${dr(c.fecha_envio)||'vencido'}. ¿Acción legal urgente hoy? ¿Artículos Ley 30225?`}]})});const d=await r.json();box.innerHTML='<strong style="color:var(--cyan)">Recomendación del Auditor IA:</strong><br><br>'+(d.content?.[0]?.text||'').replace(/
+/g,'<br>');}catch(e){box.innerHTML='Sin internet. Función IA requiere conexión activa.';}}
+async function analizar(){const txt=document.getElementById('a-txt').value.trim();if(!txt){alert('Ingresa los datos del expediente.');return;}const btn=document.getElementById('btn-an'),box=document.getElementById('res-an');btn.disabled=true;btn.textContent='Analizando...';box.style.cssText='display:block;background:rgba(21,101,192,.08);border:1px solid rgba(30,136,229,.3);border-radius:8px;padding:12px;font-size:12px;line-height:1.7;margin-top:8px;color:var(--white)';box.innerHTML='Auditando expediente...<span class="typing"></span>';const tipos={general:'análisis general de riesgo',precios:'detección de sobrecostos en Cusco',colusion:'análisis de vínculos y colusión',cronograma:'validación cronograma con lluvias sierra',fraccionamiento:'detección fraccionamiento ilegal'};try{const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:900,system:'Eres Auditor Senior de la Contraloría del Perú experto en Ley N° 30225. Reportes técnicos concisos en español.',messages:[{role:'user',content:`Realiza ${tipos[document.getElementById('a-tipo').value]||'análisis general'} del siguiente expediente en Urubamba, Cusco:\n\n${txt}\n\nEstructura:\n1. SEMÁFORO: (Crítico/Alto/Medio/Bajo) con %\n2. HALLAZGOS: máximo 4\n3. BASE LEGAL: artículos Ley 30225\n4. ACCIÓN HOY\nMáximo 280 palabras.`}]})});const d=await r.json();box.innerHTML=(d.content?.[0]?.text||'').replace(/
+/g,'<br>');}catch(e){box.innerHTML='Sin conexión a internet.';}btn.disabled=false;btn.textContent='Auditar con IA';}
+async function buscarSEACE(){const term=document.getElementById('seace-term').value.trim()||'Urubamba',anio=document.getElementById('seace-anio').value,tipo=document.getElementById('seace-tipo').value,btn=document.getElementById('btn-seace'),cont=document.getElementById('seace-res');btn.disabled=true;btn.textContent='Buscando...';cont.innerHTML='<div class="empty">Consultando SEACE...</div>';try{const d=await fetch(API+`/api/seace?termino=${encodeURIComponent(term)}&anio=${anio}`).then(r=>r.json());const items=tipo?d.resultados.filter(r=>r.codigo.startsWith(tipo)):d.resultados;if(!items.length){cont.innerHTML='<div class="empty">Sin resultados.</div>';return;}cont.innerHTML=items.map(r=>`<div class="seace-row ${r.fuente==='SEACE_REAL'?'seace-real':''}"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div style="flex:1"><div class="seace-cod">${r.codigo} · ${r.fuente==='SEACE_REAL'?'<span style="color:var(--green-l);font-weight:700">SEACE REAL</span>':'<span style="color:var(--muted)">Demo</span>'}</div><div class="seace-obj">${r.objeto}</div><div class="seace-meta">${r.entidad} · ${r.tipo} · ${ff(r.fecha)}</div></div><div class="seace-monto">S/ ${r.monto||'—'}</div></div><div style="display:flex;gap:6px;margin-top:9px;flex-wrap:wrap;align-items:center"><span class="badge ${r.estado==='Convocado'?'b-act':r.estado==='Adjudicado'?'b-res':'b-alto'}">${r.estado}</span><button class="btn" style="font-size:11px;padding:5px 11px" onclick="analizarDesdeSeace('${r.codigo}','${r.objeto.replace(/'/g,"\'")}','${r.monto}','${r.entidad.replace(/'/g,"\'")}')">Auditar con IA</button><a href="${r.url_detalle}" target="_blank" style="font-size:11px;color:var(--cyan);text-decoration:none;font-family:'JetBrains Mono',monospace;opacity:.7">Ver →</a></div></div>`).join('');}catch(e){cont.innerHTML='<div class="empty">Error al consultar SEACE.</div>';}btn.disabled=false;btn.textContent='Buscar en SEACE';}
+function analizarDesdeSeace(cod,obj,monto,entidad){go('analizar',document.getElementById('bn-analizar'));document.getElementById('a-seace').value=cod;document.getElementById('a-txt').value=`Proceso: ${cod}\nObjeto: ${obj}\nEntidad: ${entidad}\nMonto: S/ ${monto}\nRegión: Urubamba, Cusco`;}
+async function registrar(){const seace=document.getElementById('n-seace').value.trim(),obra=document.getElementById('n-obra').value.trim(),hall=document.getElementById('n-hall').value.trim();if(!seace||!obra||!hall){alert('Completa SEACE (*), obra (*) y hallazgo (*).');return;}const btn=document.getElementById('btn-reg');btn.disabled=true;btn.textContent='Guardando...';try{const r=await fetch(API+'/api/casos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({seace,obra,monto:document.getElementById('n-monto').value,institucion:document.getElementById('n-inst').value,destinatario:document.getElementById('n-dest').value,fecha_envio:document.getElementById('n-fecha').value,num_oficio:document.getElementById('n-of').value,tipo:document.getElementById('n-tipo').value,riesgo:document.getElementById('n-riesgo').value,hallazgo:hall,dispositivo:navigator.userAgent.includes('Mobile')?'Móvil':'PC'})});const d=await r.json();document.getElementById('hash-res').style.display='block';document.getElementById('hash-val').textContent=d.hash;['n-seace','n-monto','n-obra','n-inst','n-dest','n-of','n-hall'].forEach(i=>document.getElementById(i).value='');const ia=document.getElementById('ia-nvo');ia.style.display='block';ia.innerHTML='Analizando con IA...<span class="typing"></span>';try{const r2=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,system:'Auditor Senior Contraloría Perú. Español, máximo 120 palabras.',messages:[{role:'user',content:`Nuevo caso: ${obra} (${seace}). Hallazgo: ${hall}. ¿3 pasos urgentes en 48h? ¿Documentos a recopilar?`}]})});const d2=await r2.json();ia.innerHTML='<strong style="color:var(--cyan)">Próximos pasos (IA):</strong><br><br>'+(d2.content?.[0]?.text||'').replace(/
+/g,'<br>');}catch(e){ia.innerHTML='Caso guardado. Sin internet para análisis IA.';}}catch(e){alert('Error al guardar. ¿Está activo servidor.py?');}btn.disabled=false;btn.textContent='Registrar y Generar Hash SHA-256';}
+async function escalar(id){if(!confirm('¿Escalar a Contraloría General y Fiscalía Anticorrupción?'))return;await fetch(API+`/api/casos/${id}/escalar`,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});await cargarCasos();}
+async function resolver(id){if(!confirm('¿Marcar como resuelto?'))return;await fetch(API+`/api/casos/${id}/resolver`,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});await cargarCasos();}
+async function addEv(id){const n=prompt('Nombre del documento de evidencia:');if(!n)return;await fetch(API+`/api/casos/${id}/evidencia`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nombre:n,tipo:n.split('.').pop().toLowerCase()})});await cargarCasos();}
+async function cargarConfig(){try{const d=await fetch(API+'/api/config').then(r=>r.json());document.getElementById('cfg-email').value=d.email_remitente||'';document.getElementById('cfg-dest').value=d.email_destinatario||'';document.getElementById('cfg-dias').value=d.dias_alerta||'2';document.getElementById('cfg-activa').value=d.notif_activas||'false';}catch(e){}}
+async function guardarConfig(){const res=document.getElementById('cfg-res'),payload={notif_activas:document.getElementById('cfg-activa').value,dias_alerta:document.getElementById('cfg-dias').value,email_remitente:document.getElementById('cfg-email').value,email_destinatario:document.getElementById('cfg-dest').value};const pass=document.getElementById('cfg-pass').value.trim();if(pass)payload.email_password=pass;try{await fetch(API+'/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});res.innerHTML='<span style="color:var(--green-l)">✓ Configuración guardada correctamente.</span>';}catch(e){res.textContent='Error al guardar.';}}
+async function probarEmail(){const res=document.getElementById('cfg-res');res.innerHTML='Enviando prueba...<span class="typing"></span>';try{const d=await fetch(API+'/api/probar-email').then(r=>r.json());res.innerHTML=d.ok?'<span style="color:var(--green-l)">✓ Email enviado correctamente.</span>':`<span style="color:var(--red-l)">Error: ${d.msg}</span>`;}catch(e){res.textContent='Error de conexión.';}}
+async function forzarAlertas(){try{await fetch(API+'/api/alertas/forzar',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});setTimeout(cargarNotifLog,2000);alert('Verificando plazos...');}catch(e){}}
+async function cargarNotifLog(){try{const d=await fetch(API+'/api/notificaciones').then(r=>r.json());const cont=document.getElementById('notif-log');if(!d.length){cont.innerHTML='<div class="empty" style="padding:12px">Sin alertas enviadas aún.</div>';return;}cont.innerHTML=d.map(n=>`<div class="notif-row"><div class="${n.enviado?'notif-ok':'notif-fail'}"></div><div style="flex:1"><div style="color:var(--white)">${n.mensaje}</div><div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace">${n.destinatario} · ${n.fecha?.substring(0,16)||'—'}${n.error?` · <span style="color:var(--red-l)">${n.error}</span>`:''}</div></div></div>`).join('');}catch(e){}}
+async function cargarSelectCasos(){try{const casos=await fetch(API+'/api/casos').then(r=>r.json());const sel=document.getElementById('foto-caso');sel.innerHTML='<option value="">Selecciona un caso...</option>';casos.forEach(c=>sel.innerHTML+=`<option value="${c.id}">${c.id} — ${c.obra.substring(0,45)}...</option>`);}catch(e){}}
+async function verificar(){const h=document.getElementById('ver-in').value.trim(),res=document.getElementById('ver-res');if(!h){res.textContent='Ingresa un hash para verificar.';return;}try{const d=await fetch(API+`/api/verificar?hash=${encodeURIComponent(h)}`).then(r=>r.json());res.innerHTML=d.encontrado?`<span style="color:var(--green-l)">✓ VERIFICADO</span> — Caso ${d.caso_id}: "${d.obra}". No fue modificado.`:`<span style="color:var(--red-l)">✗ NO ENCONTRADO</span> — Hash no existe. El documento puede haber sido alterado.`;}catch(e){res.textContent='Error al verificar.';}}
+function genOficio(){const num=document.getElementById('o-num').value||'XXX-2026-URB',fecha=document.getElementById('o-fecha').value,dest=document.getElementById('o-dest').value||'[Destinatario]',cargo=document.getElementById('o-cargo').value||'[Cargo]',obra=document.getElementById('o-obra').value||'[Obra]',tipo=document.getElementById('o-tipo').value,halls=(document.getElementById('o-hall').value||'').split('\n').filter(h=>h.trim()),cc=document.getElementById('o-cc').value;const asuntos={aclaracion:'Solicitud de aclaración técnica y transparencia',escalada:'Escalada formal a la Contraloría General por incumplimiento de plazo legal',denuncia:'Informe de denuncia por presuntas irregularidades detectadas'};const cuerpo=`<div style="text-align:center;font-size:12px;color:#555;margin-bottom:14px">OFICIO N° ${num} &nbsp;·&nbsp; Urubamba, ${ffL(fecha)}</div><div style="margin:12px 0 6px;font-weight:bold">Señor(a):<br><strong>${dest}</strong><br>${cargo}<br>Presente.-</div><div class="of-asunto"><strong>ASUNTO:</strong> ${asuntos[tipo]||'Solicitud'} — ${obra}</div><div class="of-ref"><strong>REFERENCIA:</strong> Ley N° 27444; Ley N° 30225; Ley N° 27806.</div><br><strong>DE MI CONSIDERACIÓN:</strong><br><br><p style="text-align:justify;text-indent:2em">Me dirijo a su despacho como Sub-prefecto de Urubamba para garantizar la transparencia en el proceso: <em>${obra}</em>.</p><br><p style="text-align:justify;text-indent:2em">Tras análisis técnico de la documentación pública disponible se identificaron las siguientes observaciones:</p><br>${halls.map((h,i)=>`<div class="of-h"><strong>Observación ${i+1}:</strong> ${h}</div>`).join('')}<br><p style="text-align:justify;text-indent:2em">Solicito en un plazo no mayor a <strong>7 días hábiles</strong> el sustento técnico y aclaraciones pertinentes (Ley N° 27806).</p><div class="of-firma"><br><br><br><strong>JOSÉ MANUEL POZO CARLOS</strong><br>Sub-prefecto de la Provincia de Urubamba<br><em>Cusco, Perú</em></div><div class="of-cc"><strong>C.C.:</strong><br>${cc.split(',').map(c=>`— ${c.trim()}`).join('<br>')}<br>— Archivo Sub-Prefectura Urubamba</div>`;document.getElementById('of-body').innerHTML=cuerpo;const out=document.getElementById('oficio-out');out.style.display='block';out.scrollIntoView({behavior:'smooth'});fetch(API+'/api/oficios',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({num_oficio:num,tipo,obra,cuerpo})});}
+cargarDash();
+
+// ── PWA Install ───────────────────────────────────────────
+let deferredPrompt = null;
+
+function esIOS(){
+  return /iphone|ipad|ipod/i.test(navigator.userAgent) &&
+         !window.MSStream;
+}
+function esSafari(){
+  return /safari/i.test(navigator.userAgent) &&
+         !/chrome/i.test(navigator.userAgent);
+}
+function estaInstalado(){
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone === true;
+}
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if(!estaInstalado()){
+    setTimeout(()=>{
+      document.getElementById('install-banner').style.display='block';
+    }, 3000);
+  }
+});
+
+async function instalarApp(){
+  if(!deferredPrompt) return;
+  document.getElementById('install-banner').style.display='none';
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+}
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-banner').style.display='none';
+  deferredPrompt = null;
+});
+
+// iOS Safari: mostrar guía manual
+if(esIOS() && esSafari() && !estaInstalado()){
+  setTimeout(()=>{
+    document.getElementById('ios-guide').style.display='block';
+  }, 3000);
+}
+
+// Registrar Service Worker
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  });
+}
+
+</script>
+</body>
+</html>
