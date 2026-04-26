@@ -31,7 +31,6 @@ import ssl
 import email.mime.text
 import email.mime.multipart
 import secrets
-import struct
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
@@ -380,16 +379,8 @@ def get_stats():
 # ── SEACE ─────────────────────────────────────────────────
 
 def _ots_submit(hash_hex):
-    """
-    Ancla un hash SHA-256 en la blockchain de Bitcoin via OpenTimestamps.
-    Esto da validez legal de fecha: prueba matemática de que el documento
-    existía en ese momento exacto.
-    Devuelve el estado del anclaje.
-    """
     try:
-        # 1. Convertir hash hex a bytes
         hash_bytes = bytes.fromhex(hash_hex)
-        # 2. Enviar a servidor OTS público (gratuito)
         req = urllib.request.Request(
             "https://a.pool.opentimestamps.org/digest",
             data=hash_bytes,
@@ -403,9 +394,7 @@ def _ots_submit(hash_hex):
         )
         with urllib.request.urlopen(req, timeout=10) as resp:
             ots_data = resp.read()
-            # Guardar el archivo .ots junto con los casos
             ots_hex = ots_data.hex()
-            # Guardar en base de datos para referencia futura
             db = con()
             db.execute(
                 "INSERT OR REPLACE INTO config VALUES (?,?)",
@@ -639,20 +628,17 @@ class Handler(BaseHTTPRequestHandler):
         p    = urlparse(self.path)
         path = p.path
 
-        # Rutas públicas (sin autenticación)
         if path in ("/publico", "/ciudadano"):
             self.hout(HTML_PUB); return
         if path == "/login":
             self.hout(HTML_LOGIN); return
         if path in ("/manifest.json","/sw.js","/icon-192.svg","/icon-512.svg"):
-            pass  # handled below
+            pass
 
-        # Verificar sesión para rutas protegidas
         if path not in ("/manifest.json","/sw.js","/icon-192.svg","/icon-512.svg"):
             token = get_token_de_request(self)
             usuario = sesion_valida(token)
             if not usuario:
-                # Redirigir al login
                 self.send_response(302)
                 self.send_header("Location", "/login")
                 self.end_headers()
@@ -661,7 +647,6 @@ class Handler(BaseHTTPRequestHandler):
         if path in ("/","/index.html"):
             self.hout(HTML_APP); return
 
-        # ── Static PWA files ──────────────────────────────
         static_map = {
             "/manifest.json": ("application/manifest+json", "manifest.json"),
             "/sw.js":         ("application/javascript",   "sw.js"),
@@ -702,11 +687,10 @@ class Handler(BaseHTTPRequestHandler):
                 self.jout(get_stats())
 
             elif path == "/api/timestamp":
-                # Verificar hash con OpenTimestamps (blockchain Bitcoin)
                 qs2 = parse_qs(p.query)
                 h = qs2.get("hash",[""])[0]
                 if not h:
-                    self.jout({"ok":False,"msg":"Falta el hash"}); 
+                    self.jout({"ok":False,"msg":"Falta el hash"})
                 else:
                     result = _ots_submit(h)
                     self.jout(result)
@@ -761,7 +745,6 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         data = self.body()
 
-        # ── Login (ruta pública) ──────────────────────────
         if path == "/api/login":
             username = data.get("username", "").strip()
             password = data.get("password", "")
@@ -775,7 +758,6 @@ class Handler(BaseHTTPRequestHandler):
             if row and verificar_pass(password, row[0], row[1]):
                 token = nueva_sesion(username)
                 limpiar_sesiones_expiradas()
-                # Guardar log
                 db3 = con()
                 db3.execute(
                     "INSERT INTO sessions_log (username,ip,accion,timestamp)"
@@ -796,7 +778,6 @@ class Handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(body)
             else:
-                # Log intento fallido
                 db3 = con()
                 db3.execute(
                     "INSERT INTO sessions_log (username,ip,accion,timestamp)"
@@ -807,7 +788,6 @@ class Handler(BaseHTTPRequestHandler):
                 self.jout({"ok": False, "msg": "Usuario o contraseña incorrectos"}, 401)
             return
 
-        # ── Logout ────────────────────────────────────────
         if path == "/api/logout":
             token = get_token_de_request(self)
             if token and token in _SESIONES:
@@ -823,7 +803,6 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers(); self.wfile.write(body)
             return
 
-        # ── Cambiar contraseña ────────────────────────────
         if path == "/api/cambiar-password":
             token = get_token_de_request(self)
             usuario = sesion_valida(token)
@@ -841,7 +820,6 @@ class Handler(BaseHTTPRequestHandler):
             self.jout({"ok":True,"msg":"Contraseña actualizada correctamente"})
             return
 
-        # ── Verificar sesión activa para todas las demás rutas ──
         token = get_token_de_request(self)
         usuario = sesion_valida(token)
         if not usuario:
@@ -873,14 +851,12 @@ class Handler(BaseHTTPRequestHandler):
                     eh=sha256(data["num_oficio"]+now)[:8]
                     cur.execute("INSERT INTO evidencias (caso_id,nombre,fecha,tipo_doc,hash) VALUES (?,?,?,?,?)",
                         (cid,f"{data['num_oficio']}.docx",fe,"docx",eh))
-                # Audit log
                 db.execute(
                     "INSERT INTO sessions_log (username,ip,accion,timestamp)"
                     " VALUES (?,?,?,?)",
                     (usuario, self.client_address[0],
                      f"CASO_NUEVO:{cid}", datetime.datetime.now().isoformat()))
                 db.commit()
-                # Auto-anclar hash en blockchain en background
                 threading.Thread(
                     target=_ots_submit, args=(h,), daemon=True).start()
                 self.jout({"ok":True,"id":cid,"hash":h})
@@ -947,12 +923,30 @@ class Handler(BaseHTTPRequestHandler):
 
 
 # ══════════════════════════════════════════════════════════
-#  HTML (interfaz completa — identica a v4.0)
+#  HTML
 # ══════════════════════════════════════════════════════════
 
-HTML_APP   = open("vigia_app.html",   encoding="utf-8").read() if os.path.exists("vigia_app.html")   else "<html><body><script>location='/login'</script></body></html>"
-HTML_LOGIN = open("vigia_login.html", encoding="utf-8").read() if os.path.exists("vigia_login.html") else "<html><body><h1>Login</h1></body></html>"
-HTML_PUB = open("vigia_pub.html", encoding="utf-8").read() if os.path.exists("vigia_pub.html") else "<html><body><h1>Panel Ciudadano</h1></body></html>"
+def _leer_html(nombre, fallback):
+    candidatos = [
+        nombre,
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), nombre),
+        os.path.join(os.getcwd(), nombre),
+        os.path.join("/opt/render/project/src", nombre),
+    ]
+    for ruta in candidatos:
+        try:
+            if os.path.exists(ruta):
+                contenido = open(ruta, encoding="utf-8").read()
+                print(f"[VIGIA] HTML cargado: {nombre} desde {ruta}")
+                return contenido
+        except Exception as e:
+            print(f"[VIGIA] No pudo cargar {ruta}: {e}")
+    print(f"[VIGIA] ADVERTENCIA: {nombre} no encontrado, usando fallback")
+    return fallback
+
+HTML_APP   = _leer_html("vigia_app.html",   "<html><body><script>location.href='/login'</script></body></html>")
+HTML_LOGIN = _leer_html("vigia_login.html",  "<html><body><h2>Vigia de Integridad</h2><form onsubmit=\"event.preventDefault();fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:document.getElementById('u').value,password:document.getElementById('p').value})}).then(r=>r.json()).then(d=>{if(d.ok)location.href='/';else alert(d.msg)})\"><input id='u' placeholder='Usuario' style='display:block;margin:10px;padding:8px'><input id='p' type='password' placeholder='Contrasena' style='display:block;margin:10px;padding:8px'><button type='submit' style='margin:10px;padding:8px 20px'>Ingresar</button></form></body></html>")
+HTML_PUB   = _leer_html("vigia_pub.html",    "<html><body><h1>Panel Ciudadano</h1></body></html>")
 
 
 # ══════════════════════════════════════════════════════════
@@ -966,20 +960,42 @@ def abrir_nav():
 
 
 if __name__ == "__main__":
-    init_db()
-    ALERTAS.start()
-    BACKUP.start()
+    print(f"[VIGIA] Iniciando... Puerto={PORT} Nube={IS_CLOUD}")
+    print(f"[VIGIA] Python OK, OS={os.name}")
+
+    host = "0.0.0.0" if IS_CLOUD else "localhost"
+    try:
+        server = HTTPServer((host, PORT), Handler)
+        print(f"[VIGIA] Puerto {PORT} abierto en {host} - OK")
+    except Exception as e:
+        print(f"[VIGIA] ERROR abriendo puerto: {e}")
+        raise
+
+    try:
+        init_db()
+        print("[VIGIA] Base de datos OK")
+    except Exception as e:
+        print(f"[VIGIA] ERROR en base de datos: {e}")
+        raise
+
+    try:
+        ALERTAS.start()
+        BACKUP.start()
+        print("[VIGIA] Daemons iniciados OK")
+    except Exception as e:
+        print(f"[VIGIA] Advertencia daemons: {e}")
+
     print("=" * 56)
     print("  VIGIA DE INTEGRIDAD v4.1")
     print("  Sub-Prefectura de Urubamba, Cusco")
     print("  Jose Manuel Pozo Carlos")
     print("=" * 56)
-    print(f"  Principal:  http://localhost:{PORT}")
-    print(f"  Ciudadano:  http://localhost:{PORT}/publico")
-    print(f"  Base datos: {os.path.abspath(DB_PATH)}")
-    print("  Para parar: Ctrl+C")
+    print(f"  URL: {'https://vigia-integridad.onrender.com' if IS_CLOUD else f'http://localhost:{PORT}'}")
+    print(f"  Puerto: {PORT} en {host}")
+    print("  Sistema listo.")
     print("=" * 56)
-    host = "0.0.0.0" if IS_CLOUD else "localhost"
+
     if not IS_CLOUD:
         threading.Thread(target=abrir_nav, daemon=True).start()
-    HTTPServer((host, PORT), Handler).serve_forever()
+
+    server.serve_forever()
