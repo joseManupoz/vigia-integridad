@@ -47,6 +47,27 @@ MAX_FOTO_BYTES = 3 * 1024 * 1024
 PLAZO_DIAS     = 7
 _CLAVE         = "VIGIA-JMPC-URB-2026"
 
+# ── Licencia de Propietario ───────────────────────────────
+_LICENSE_PROPIETARIO = "JOSE MANUEL POZO CARLOS"
+_LICENSE_DNI         = "23843435"
+
+def verificar_licencia():
+    """Verifica licencia antes de arrancar. Sin clave correcta el sistema no inicia."""
+    key_env = os.environ.get("VIGIA_LICENSE_KEY", "").strip()
+    if not key_env:
+        print("[VIGIA] ERROR: No se encontro VIGIA_LICENSE_KEY en variables de entorno.")
+        print(f"[VIGIA] Propiedad de {_LICENSE_PROPIETARIO} — DNI {_LICENSE_DNI}.")
+        print("[VIGIA] Uso no autorizado viola la Ley N°30096 — Delitos Informaticos del Peru.")
+        raise SystemExit(1)
+    h = hashlib.sha256(f"VIGIA-JMPC-URB-2026-{_LICENSE_DNI}".encode()).hexdigest()[:24].upper()
+    key_valida = f"VIGIA-{h[:6]}-{h[6:12]}-{h[12:18]}-{h[18:24]}"
+    if not hmac.compare_digest(key_env, key_valida):
+        print("[VIGIA] ERROR: LICENCIA INVALIDA. Sistema bloqueado.")
+        print(f"[VIGIA] Propietario: {_LICENSE_PROPIETARIO}")
+        raise SystemExit(1)
+    print(f"[VIGIA] Licencia verificada — Propietario: {_LICENSE_PROPIETARIO}")
+    return True
+
 # ── Autenticación ─────────────────────────────────────────
 # Sesiones activas: {token: {"user": str, "expira": datetime}}
 _SESIONES = {}
@@ -430,6 +451,195 @@ def _ots_submit(hash_hex):
         }
 
 
+# ── invierte.pe — Consulta por código de inversión ────────
+
+def invierte_consultar(codigo):
+    """Consulta invierte.pe del MEF por código de inversión."""
+    try:
+        url = f"https://ofi5.mef.gob.pe/invierte/consulta/seguimientoInversion?codigo={codigo}"
+        req = urllib.request.Request(url, headers={
+            "User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            "Accept":          "application/json, text/javascript, */*",
+            "Accept-Language": "es-PE,es;q=0.9",
+            "Referer":         "https://ofi5.mef.gob.pe/invierte/",
+        })
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = json.loads(resp.read().decode("utf-8", "replace"))
+            if isinstance(data, list) and data:
+                item = data[0]
+            elif isinstance(data, dict):
+                item = data
+            else:
+                return None
+            return {
+                "fuente":        "INVIERTE_REAL",
+                "codigo":        str(codigo),
+                "nombre":        item.get("nombreProyecto") or item.get("nombre", ""),
+                "entidad":       item.get("entidad", ""),
+                "monto":         str(item.get("montoInversion") or item.get("monto", "")),
+                "modalidad":     item.get("modalidadEjecucion", ""),
+                "avance_fisico": str(item.get("avanceFisico") or item.get("avance", "0")),
+                "avance_financiero": str(item.get("avanceFinanciero", "")),
+                "estado":        item.get("estadoInversion") or item.get("estado", ""),
+                "fecha_inicio":  item.get("fechaInicio", ""),
+                "fecha_fin":     item.get("fechaFin", ""),
+                "ubigeo":        item.get("ubigeo", ""),
+                "url":           f"https://ofi5.mef.gob.pe/invierte/consulta/seguimientoInversion?codigo={codigo}",
+            }
+    except Exception as e:
+        print(f"[VIGIA] invierte.pe error codigo {codigo}: {e}")
+        return None
+
+
+def invierte_buscar(termino, anio):
+    """Busca proyectos en invierte.pe por término y año."""
+    try:
+        params = urllib.parse.urlencode({
+            "nombreProyecto": termino,
+            "anio": anio,
+            "pagina": 1,
+            "cantidad": 15,
+        })
+        url = f"https://ofi5.mef.gob.pe/invierte/consulta/seguimientoInversion/lista?{params}"
+        req = urllib.request.Request(url, headers={
+            "User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            "Accept":          "application/json",
+            "Accept-Language": "es-PE,es;q=0.9",
+        })
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            items = json.loads(resp.read().decode("utf-8", "replace"))
+            if not isinstance(items, list):
+                items = items.get("lista", items.get("data", []))
+            return [{
+                "fuente":        "INVIERTE_REAL",
+                "codigo":        str(it.get("codigoInversion") or it.get("codigo", "")),
+                "nombre":        it.get("nombreProyecto") or it.get("nombre", ""),
+                "entidad":       it.get("entidad", ""),
+                "monto":         str(it.get("montoInversion") or it.get("monto", "")),
+                "modalidad":     it.get("modalidadEjecucion", ""),
+                "avance_fisico": str(it.get("avanceFisico", "0")),
+                "estado":        it.get("estadoInversion") or it.get("estado", ""),
+                "fecha_inicio":  it.get("fechaInicio", ""),
+                "url":           f"https://ofi5.mef.gob.pe/invierte/consulta/seguimientoInversion?codigo={it.get('codigoInversion','')}",
+            } for it in items[:15]]
+    except Exception as e:
+        print(f"[VIGIA] invierte.pe buscar error: {e}")
+        return []
+
+
+# ── Infobras — Consulta por ID de obra ────────────────────
+
+def infobras_consultar(obra_id):
+    """Consulta Infobras de la Contraloría por ID de obra."""
+    try:
+        url = f"https://infobras.contraloria.gob.pe/InfobrasWeb/api/obra/{obra_id}"
+        req = urllib.request.Request(url, headers={
+            "User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            "Accept":          "application/json",
+            "Accept-Language": "es-PE,es;q=0.9",
+            "Referer":         "https://infobras.contraloria.gob.pe/",
+        })
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = json.loads(resp.read().decode("utf-8", "replace"))
+            return {
+                "fuente":           "INFOBRAS_REAL",
+                "obra_id":          str(obra_id),
+                "nombre":           data.get("nombreObra") or data.get("nombre", ""),
+                "entidad":          data.get("entidad", ""),
+                "monto":            str(data.get("montoContratado") or data.get("monto", "")),
+                "modalidad":        data.get("modalidadEjecucion", ""),
+                "avance_fisico":    str(data.get("avanceFisico", "0")),
+                "avance_financiero":str(data.get("avanceFinanciero", "0")),
+                "estado":           data.get("estadoObra") or data.get("estado", ""),
+                "fecha_inicio":     data.get("fechaInicio", ""),
+                "fecha_fin":        data.get("fechaFin", ""),
+                "residente":        data.get("residenteObra", ""),
+                "supervisor":       data.get("supervisorObra", ""),
+                "contratista":      data.get("contratista", ""),
+                "ubigeo":           data.get("ubigeo", ""),
+                "url":              f"https://infobras.contraloria.gob.pe/InfobrasWeb/Mapa/Obra?ObraId={obra_id}",
+                "alerta_vigia":     _analizar_alerta_infobras(data),
+            }
+    except Exception as e:
+        print(f"[VIGIA] Infobras error obra {obra_id}: {e}")
+        return None
+
+
+def infobras_buscar(termino, entidad=""):
+    """Busca obras en Infobras por término."""
+    try:
+        params = urllib.parse.urlencode({
+            "nombre": termino,
+            "entidad": entidad,
+            "pagina": 1,
+        })
+        url = f"https://infobras.contraloria.gob.pe/InfobrasWeb/api/obra/buscar?{params}"
+        req = urllib.request.Request(url, headers={
+            "User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            "Accept":          "application/json",
+            "Referer":         "https://infobras.contraloria.gob.pe/",
+        })
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            items = json.loads(resp.read().decode("utf-8", "replace"))
+            if not isinstance(items, list):
+                items = items.get("lista", items.get("obras", []))
+            return [{
+                "fuente":        "INFOBRAS_REAL",
+                "obra_id":       str(it.get("obraId") or it.get("id", "")),
+                "nombre":        it.get("nombreObra") or it.get("nombre", ""),
+                "entidad":       it.get("entidad", ""),
+                "monto":         str(it.get("montoContratado") or it.get("monto", "")),
+                "avance_fisico": str(it.get("avanceFisico", "0")),
+                "estado":        it.get("estadoObra") or it.get("estado", ""),
+                "fecha_inicio":  it.get("fechaInicio", ""),
+                "alerta_vigia":  _analizar_alerta_infobras(it),
+                "url":           f"https://infobras.contraloria.gob.pe/InfobrasWeb/Mapa/Obra?ObraId={it.get('obraId','')}",
+            } for it in items[:20]]
+    except Exception as e:
+        print(f"[VIGIA] Infobras buscar error: {e}")
+        return []
+
+
+def _analizar_alerta_infobras(data):
+    """Analiza datos de una obra y genera alerta automática de VIGIA."""
+    alertas = []
+    try:
+        avance = float(str(data.get("avanceFisico", "0")).replace("%", "") or 0)
+        estado = str(data.get("estadoObra") or data.get("estado", "")).lower()
+        monto  = float(str(data.get("montoContratado") or data.get("monto", "0")
+                          ).replace(",", "").replace(" ", "") or 0)
+        fecha_str = data.get("fechaInicio", "")
+
+        dias = 0
+        if fecha_str:
+            try:
+                fi = datetime.date.fromisoformat(fecha_str[:10])
+                dias = (datetime.date.today() - fi).days
+            except Exception:
+                pass
+
+        if avance == 0 and dias > 30 and "ejecucion" in estado:
+            alertas.append(f"🔴 CRÍTICO: 0% avance en {dias} días")
+        elif avance < 10 and dias > 60 and "ejecucion" in estado:
+            alertas.append(f"🟠 GRAVE: Solo {avance}% avance en {dias} días")
+        elif avance < 30 and dias > 120 and "ejecucion" in estado:
+            alertas.append(f"🟡 ALERTA: {avance}% avance en {dias} días (esperado >40%)")
+
+        if monto == 0 and "ejecucion" in estado:
+            alertas.append("🔴 CRÍTICO: Monto S/0.00 — posible obra sin expediente")
+
+        avance_fin = float(str(data.get("avanceFinanciero", "0")
+                              ).replace("%", "") or 0)
+        if avance_fin > avance + 30:
+            alertas.append(f"🔴 ALERTA: Gasto financiero ({avance_fin}%) supera avance físico ({avance}%) en más de 30%")
+
+    except Exception:
+        pass
+    return alertas if alertas else ["✅ Sin alertas detectadas"]
+
+
+# ── SEACE ─────────────────────────────────────────────────
+
 def seace_buscar(termino, anio):
     key = f"{termino}_{anio}"
     db  = con()
@@ -716,6 +926,56 @@ class Handler(BaseHTTPRequestHandler):
                 res  = seace_buscar(term, anio)
                 self.jout({"ok":True,"total":len(res),"resultados":res})
 
+            elif path == "/api/invierte":
+                codigo = qs.get("codigo",[""])[0]
+                term   = qs.get("termino",[""])[0]
+                anio   = qs.get("anio",[str(datetime.date.today().year)])[0]
+                if codigo:
+                    data = invierte_consultar(codigo)
+                    if data:
+                        self.jout({"ok":True,"fuente":"INVIERTE_REAL","resultado":data})
+                    else:
+                        self.jout({"ok":False,"msg":f"Código {codigo} no encontrado en invierte.pe"})
+                elif term:
+                    res = invierte_buscar(term, anio)
+                    self.jout({"ok":True,"total":len(res),"resultados":res,
+                               "fuente":"INVIERTE_REAL" if res else "SIN_DATOS"})
+                else:
+                    self.jout({"ok":False,"msg":"Proporciona codigo o termino"})
+
+            elif path == "/api/infobras":
+                obra_id = qs.get("id",[""])[0]
+                term    = qs.get("termino",[""])[0]
+                entidad = qs.get("entidad",[""])[0]
+                if obra_id:
+                    data = infobras_consultar(obra_id)
+                    if data:
+                        self.jout({"ok":True,"fuente":"INFOBRAS_REAL","resultado":data})
+                    else:
+                        self.jout({"ok":False,"msg":f"Obra {obra_id} no encontrada en Infobras"})
+                elif term:
+                    res = infobras_buscar(term, entidad)
+                    self.jout({"ok":True,"total":len(res),"resultados":res,
+                               "fuente":"INFOBRAS_REAL" if res else "SIN_DATOS"})
+                else:
+                    self.jout({"ok":False,"msg":"Proporciona id o termino"})
+
+            elif path == "/api/auditoria-rapida":
+                obra_id  = qs.get("infobras",[""])[0]
+                inv_cod  = qs.get("invierte",[""])[0]
+                resultado = {"infobras": None, "invierte": None, "alertas": []}
+                if obra_id:
+                    resultado["infobras"] = infobras_consultar(obra_id)
+                    if resultado["infobras"]:
+                        resultado["alertas"].extend(resultado["infobras"].get("alerta_vigia",[]))
+                if inv_cod:
+                    resultado["invierte"] = invierte_consultar(inv_cod)
+                if not resultado["infobras"] and not resultado["invierte"]:
+                    self.jout({"ok":False,"msg":"No se encontró información en ninguna plataforma"})
+                else:
+                    resultado["ok"] = True
+                    self.jout(resultado)
+
             elif path == "/api/config":
                 self.jout({k: cfg_get(k) for k in [
                     "email_smtp_servidor","email_smtp_puerto",
@@ -950,15 +1210,22 @@ class Handler(BaseHTTPRequestHandler):
 # ══════════════════════════════════════════════════════════
 
 def _leer_html(nombre, fallback):
-    try:
-        ruta = os.path.join(os.path.dirname(os.path.abspath(__file__)), nombre)
-        if os.path.exists(ruta):
-            return open(ruta, encoding="utf-8").read()
-        # Buscar en directorio de trabajo
-        if os.path.exists(nombre):
-            return open(nombre, encoding="utf-8").read()
-    except Exception:
-        pass
+    # Intentar múltiples ubicaciones
+    candidatos = [
+        nombre,
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), nombre),
+        os.path.join(os.getcwd(), nombre),
+        os.path.join("/opt/render/project/src", nombre),
+    ]
+    for ruta in candidatos:
+        try:
+            if os.path.exists(ruta):
+                contenido = open(ruta, encoding="utf-8").read()
+                print(f"[VIGIA] HTML cargado: {nombre} desde {ruta}")
+                return contenido
+        except Exception as e:
+            print(f"[VIGIA] No pudo cargar {ruta}: {e}")
+    print(f"[VIGIA] ADVERTENCIA: {nombre} no encontrado, usando fallback")
     return fallback
 
 HTML_APP   = _leer_html("vigia_app.html",   "<html><body><script>location.href='/login'</script></body></html>")
@@ -977,20 +1244,51 @@ def abrir_nav():
 
 
 if __name__ == "__main__":
-    init_db()
-    ALERTAS.start()
-    BACKUP.start()
+    # ── Verificacion de licencia PRIMERO
+    verificar_licencia()
+
+    # ── Render debug info ─────────────────────────────────
+    print(f"[VIGIA] Iniciando... Puerto={PORT} Nube={IS_CLOUD}")
+    print(f"[VIGIA] Python OK, OS={os.name}")
+
+    # ── Bind al puerto PRIMERO (Render lo requiere) ───────
+    host = "0.0.0.0" if IS_CLOUD else "localhost"
+    try:
+        server = HTTPServer((host, PORT), Handler)
+        print(f"[VIGIA] Puerto {PORT} abierto en {host} - OK")
+    except Exception as e:
+        print(f"[VIGIA] ERROR abriendo puerto: {e}")
+        raise
+
+    # ── Inicializar base de datos ─────────────────────────
+    try:
+        init_db()
+        print("[VIGIA] Base de datos OK")
+    except Exception as e:
+        print(f"[VIGIA] ERROR en base de datos: {e}")
+        raise
+
+    # ── Iniciar daemons ───────────────────────────────────
+    try:
+        ALERTAS.start()
+        BACKUP.start()
+        print("[VIGIA] Daemons iniciados OK")
+    except Exception as e:
+        print(f"[VIGIA] Advertencia daemons: {e}")
+
+    # ── Info de inicio ────────────────────────────────────
     print("=" * 56)
     print("  VIGIA DE INTEGRIDAD v4.1")
     print("  Sub-Prefectura de Urubamba, Cusco")
     print("  Jose Manuel Pozo Carlos")
     print("=" * 56)
-    print(f"  Principal:  http://localhost:{PORT}")
-    print(f"  Ciudadano:  http://localhost:{PORT}/publico")
-    print(f"  Base datos: {os.path.abspath(DB_PATH)}")
-    print("  Para parar: Ctrl+C")
+    print(f"  URL: {'https://vigia-integridad.onrender.com' if IS_CLOUD else f'http://localhost:{PORT}'}")
+    print(f"  Puerto: {PORT} en {host}")
+    print("  Sistema listo.")
     print("=" * 56)
-    host = "0.0.0.0" if IS_CLOUD else "localhost"
+
     if not IS_CLOUD:
         threading.Thread(target=abrir_nav, daemon=True).start()
-    HTTPServer((host, PORT), Handler).serve_forever()
+
+    # ── Servir para siempre ───────────────────────────────
+    server.serve_forever()
