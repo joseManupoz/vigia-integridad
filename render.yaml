@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: vigia-integridad
+    name: vigia-integridad-nuevo
     runtime: python
     pythonVersion: "3.12.0"
     buildCommand: pip install --upgrade pip
@@ -10,4 +10,6 @@ services:
         value: "true"
       - key: PYTHON_VERSION
         value: "3.12.0"
+      - key: VIGIA_LICENSE_KEY
+        value: "VIGIA-D72802-A0A5EA-EC9093-890468"
     plan: free
