@@ -1435,4 +1435,3 @@ if __name__ == "__main__":
 
     # ── Servir para siempre ───────────────────────────────
     server.serve_forever()
-
